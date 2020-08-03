@@ -22,15 +22,20 @@ struct Server {
 
 struct Endpoint {
   int id;
+  int datacenterLatency;
   unordered_map<int, int> connections; // server id -> latency
   vector<int> requests; // video ids this endpoint requests
 };
 
 void parseInput(std::string filename);
 
-std::vector<Video> VIDEO_VECTOR;
-std::vector<Server> SERVER_VECTOR;
+//std::vector<Video> VIDEO_VECTOR;
+//std::vector<Server> SERVER_VECTOR;
+//std::vector<Endpoint>
 
+std::map<int, Video> VIDEO_MAP;
+std::map<int, Server> SERVER_MAP;
+std::map<int, Endpoint> ENDPOINT_MAP;
 
 int main() {
     std::string filename;
@@ -52,13 +57,33 @@ void parseInput(std::string filename) {
 
     std::vector<Video> videoVector;
 
-    //add video sizes
+    //read second line (video sizes)
     for(uint32_t i = 0; i < numVideos; ++i) {
         Video newVideo;
         newVideo.id = i;
         inputFile >> newVideo.size;
-        VIDEO_VECTOR.push_back(newVideo);
+        VIDEO_MAP[i] = newVideo;
     }
+
+    //read next set of lines (num endpoints)
+    for(uint32_t i = 0; i < numEndpoints; ++i) {
+        Endpoint currentEndpoint;
+        currentEndpoint.id = i;
+        inputFile >> currentEndpoint.datacenterLatency;
+        int numCache;
+        inputFile >> numCache;
+
+        for(uint32_t cache = 0; cache < numCache; ++cache) {
+            int cacheNum;
+            int latency;
+            inputFile >> cacheNum >> latency;
+            currentEndpoint.connections[cacheNum] = latency;
+        }
+
+        ENDPOINT_MAP[i] = currentEndpoint;
+    }
+
+
 
 
 
