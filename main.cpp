@@ -34,9 +34,9 @@ struct Endpoint {
 
 void parseInput(std::string filename);
 
-std::map<int, Video> VIDEO_MAP;
-std::map<int, Server> SERVER_MAP;
-std::map<int, Endpoint> ENDPOINT_MAP;
+std::vector<Video> VIDEOS;
+std::vector<Server> SERVERS;
+std::vector<Endpoint> ENDPOINTS;
 
 
 int main() {
@@ -78,7 +78,7 @@ void parseInput(std::string filename) {
         Video newVideo;
         newVideo.id = i;
         inputFile >> newVideo.size;
-        VIDEO_MAP[i] = newVideo;
+        VIDEOS[i] = newVideo;
     }
 
     //read next set of lines (num endpoints)
@@ -100,17 +100,18 @@ void parseInput(std::string filename) {
             Server newServer;
             newServer.size = cacheCapacity;
             newServer.id = cache;
-            SERVER_MAP[cache] = newServer;
+            SERVERS[cache] = newServer;
         }
 
-        ENDPOINT_MAP[i] = currentEndpoint;
+        ENDPOINTS[i] = currentEndpoint;
     }
 
-    for (const auto& endpoint : ENDPOINT_MAP) {
-      for (const auto& videoPair : endpoint.second.videoRequests) {
-        VIDEO_MAP[videoPair.first].requestedBy.insert(endpoint.first);
-      }
-    }
+//    TODO idk what this does lol
+//    for (const auto& endpoint : ENDPOINTS) {
+//      for (const auto& videoPair : endpoint.videoRequests) {
+//        VIDEOS[videoPair].requestedBy.insert(endpoint);
+//      }
+//    }
 
     //iterate through video requests
     for(uint32_t i = 0; i < numRequests; ++i) {
@@ -119,9 +120,12 @@ void parseInput(std::string filename) {
         int numRequest;
         inputFile >> videoId >> endpointId >> numRequest;
 
-        VIDEO_MAP[videoId].requestedBy.insert(endpointId);
-        ENDPOINT_MAP[endpointId].videoRequests[videoId] = numRequest;
+        VIDEOS[videoId].requestedBy.insert(endpointId);
+        ENDPOINTS[endpointId].videoRequests[videoId] = numRequest;
     }
+
+    //TESTING PARSE
+
 
 
     inputFile.close();
@@ -152,7 +156,7 @@ int calc_score(const vector<Endpoint>& endpoints) {
       vidNumReq = vidReq.second;
       bestScore = 0;
       for (const auto& conn : endpoint.connections) {
-        const auto& server = SERVER_MAP[conn.first];
+        const auto& server = SERVERS[conn.first];
         if (server.videosSet.find(vidReq.first) != server.videosSet.end()) {
           scoreCand = (endpoint.connections.find(DATA_CENTER)->second - conn.second) * vidNumReq;
           bestScore = max(scoreCand, bestScore);
@@ -202,8 +206,9 @@ int getBestCacheFromVideoRequest(int videoId) {
   int minScore = -1;
   int minLatencyCache = -1;
 
-  for (const auto& endPointID : VIDEO_MAP[videoId].requestedBy) {
-    Endpoint endpoint = ENDPOINT_MAP[endPointID];
+  for (const auto& endPointID : VIDEOS[videoId].requestedBy) {
+    Endpoint endpoint = ENDPOINTS[endPointID];
+
     int numVidRequests = endpoint.videoRequests[videoId];
     int dataCenterLatency = endpoint.connections[DATA_CENTER];
     for (const auto& connection : endpoint.connections) { // connection = <server id, latency>
