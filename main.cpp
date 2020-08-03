@@ -1,4 +1,5 @@
 #include <iostream>
+#include <iterator>
 #include <map>
 #include <algorithm>
 #include <fstream>
@@ -37,31 +38,6 @@ void parseInput(std::string filename);
 std::vector<Video> VIDEOS;
 std::vector<Server> SERVERS;
 std::vector<Endpoint> ENDPOINTS;
-
-
-int main() {
-    std::string filename, outputName;
-    std::ifstream inputFile;
-
-    std::cout<<"which file do you want to open? ";
-    std::cin>>filename;
-
-    std::cout<<"which file do you want to write to? ";
-    std::cin>>outputName;
-
-    parseInput(filename);
-
-    std::map<int, std::vector<int>> result;
-
-    std::vector<VideoId> sortedVideos = sortBySizeAndRequests();
-    for (const auto& videoId : sortedVideos) {
-      int cacheId = getBestCacheFromVideoRequest(VIDEO_MAP[videoId].requestedBy, videoId);
-      result[cacheid].push_back(videoId);
-    }
-
-    outputFile(outputName, result)
-    
-}
 
 
 void parseInput(std::string filename) {
@@ -169,15 +145,6 @@ int calc_score(const vector<Endpoint>& endpoints) {
   return score;
 }
 
-template<typename T>
-vector<int> keys_of_map(const T& mp) {
-  vector<int> keys(mp.size());
-  for (const auto& p : mp) {
-    keys.push_back(p.first);
-  }
-  return keys;
-}
-
 vector<VideoId> sortBySizeAndRequests() {
   // size / total # of requests. smaller = better
   //   e.g. 100 MB, 10 req (ratio 10) is worse than 200 MB, 50 req (ratio 4).
@@ -186,18 +153,21 @@ vector<VideoId> sortBySizeAndRequests() {
   // rather than aggregating all endpoint requests, because later on we try to
   // attach the video to only one (the best) cache.
   auto score = [](int videoId) -> double {
-    const auto& video = VIDEO_MAP[videoId];
+    const auto& video = VIDEOS[videoId];
     const double size = video.size;
     double requests = 0;
     for (int req : video.requestedBy) {
-      auto& ep = ENDPOINT_MAP[req];
+      auto& ep = ENDPOINTS[req];
       requests += ep.videoRequests[videoId];
     }
 
     return (requests / size);
   };
 
-  vector<VideoId> videos = keys_of_map(VIDEO_MAP);
+  vector<VideoId> videos (VIDEOS.size());
+  for (int i = 0; i < videos.size(); ++i) {
+    videos[i] = i;
+  }
   sort(videos.begin(), videos.end(), score);
   return videos;
 }
@@ -227,13 +197,37 @@ int getBestCacheFromVideoRequest(int videoId) {
 void outputFile(std::string& fileName, std::map<int, std::vector<int>> result) {
   std::ofstream outputFile(fileName);
 
-  ofstream << result.size() << std::endl;
+  outputFile << result.size() << std::endl;
 
-  for (Map.Entry<int, std::vector<int>> entry : result.entrySet()) {
-    int cacheId = entry.getKey();
-    std::vector vec = entry.getValue();
-    ofstream << cacheId << " ";
-    std::copy (vec.begin(), vec.end(), std::ostream_iterator<int>(ofstream, " ");
-    ofstream << std::endl;
+  for (const auto& entry : result) {
+    int cacheId = entry.first;
+    const auto& vec = entry.second;
+    outputFile << cacheId << " ";
+    std::copy (vec.begin(), vec.end(), std::ostream_iterator<int>(outputFile, " "));
+    outputFile << std::endl;
   }
+}
+
+
+int main() {
+    std::string filename, outputName;
+    std::ifstream inputFile;
+
+    std::cout<<"which file do you want to open? ";
+    std::cin>>filename;
+
+    std::cout<<"which file do you want to write to? ";
+    std::cin>>outputName;
+
+    parseInput(filename);
+
+    std::map<int, std::vector<int>> result;
+
+    std::vector<VideoId> sortedVideos = sortBySizeAndRequests();
+    for (const auto& videoId : sortedVideos) {
+      int cacheId = getBestCacheFromVideoRequest(videoId);
+      result[cacheId].push_back(videoId);
+    }
+
+    outputFile(outputName, result);
 }
