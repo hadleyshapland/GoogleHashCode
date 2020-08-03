@@ -4,21 +4,32 @@
 #include <vector>
 #include <string>
 
-struct Endpoint {
-    int endpointNumber;
-    int numServersConnected;
-    int latencyFromDataCenter;
-
-    //map cache number to latency amount
-    std::map<int, int> latencyFromCache;
-};
+using namespace std;
 
 struct Video {
-    //stuff
+  int id;
+  int size;
+  vector<int> requestedBy; // endpoint IDs requesting the video
+};
+
+struct Server {
+  int id; // -1 for data center
+  int size; // -1 for data center
+  vector<int> videos; // video ids on this server
+};
+
+struct Connection {
+  int serverId;
+  int latency;
+};
+
+struct Endpoint {
+  int id;
+  vector<Connection> connectedTo;
+  vector<int> requests; // video ids this endpoint requests
 };
 
 std::vector<Video> parseInput(std::string filename);
-
 
 int main() {
     std::string filename;
@@ -37,13 +48,9 @@ std::vector<Video> parseInput(std::string filename) {
     int numVideos, numEndpoints, numRequests, numCache, cacheCapacity;
     inputFile >> numVideos >> numEndpoints >> numRequests >> numCache >> cacheCapacity;
 
-    std::cout << numVideos << " " << numEndpoints << " " << numRequests << " " << numCache << " "
-    << cacheCapacity <<std::endl;
-
     std::vector<Video> videoVector;
 
     //add video sizes
-    for(uint32_t i = 0)
 
 
     inputFile.close();
