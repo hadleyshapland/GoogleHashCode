@@ -3,6 +3,8 @@
 #include <fstream>
 #include <vector>
 #include <string>
+#include <unordered_map>
+
 
 using namespace std;
 
@@ -18,14 +20,9 @@ struct Server {
   vector<int> videos; // video ids on this server
 };
 
-struct Connection {
-  int serverId;
-  int latency;
-};
-
 struct Endpoint {
   int id;
-  vector<Connection> connectedTo;
+  unordered_map<int, int> connections; // server id -> latency
   vector<int> requests; // video ids this endpoint requests
 };
 
@@ -44,6 +41,7 @@ int main() {
 
     parseInput(filename);
 }
+
 
 void parseInput(std::string filename) {
     std::ifstream inputFile(filename);
@@ -67,10 +65,17 @@ void parseInput(std::string filename) {
     inputFile.close();
 }
 
-
-
-
-
-
-
-
+// Emit optimized server capacities in form
+//   <num_servers>\n
+//   (<server_id> (<video_id>)*\n)*
+void emit(const vector<Server>& servers) {
+  cout << servers.size() << "\n";
+  for (const auto& server : servers) {
+    cout << server.id;
+    for (const auto& video : server.videos) {
+      cout << " " << video;
+    }
+    cout << "\n";
+  }
+  cout << flush;
+}
