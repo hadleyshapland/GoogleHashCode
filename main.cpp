@@ -168,7 +168,9 @@ vector<VideoId> sortBySizeAndRequests() {
   for (int i = 0; i < videos.size(); ++i) {
     videos[i] = i;
   }
-  sort(videos.begin(), videos.end(), score);
+  sort(videos.begin(), videos.end(), [&score](const auto& a, const auto& b) {
+    return score(a) < score(b);
+  });
   return videos;
 }
 
