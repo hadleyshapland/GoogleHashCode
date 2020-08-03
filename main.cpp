@@ -80,6 +80,11 @@ void parseInput(std::string filename) {
             int latency;
             inputFile >> cacheNum >> latency;
             currentEndpoint.connections[cacheNum] = latency;
+
+            Server newServer;
+            newServer.size = cacheCapacity;
+            newServer.id = cache;
+            SERVER_MAP[cache] = newServer;
         }
 
         ENDPOINT_MAP[i] = currentEndpoint;
@@ -101,6 +106,7 @@ void parseInput(std::string filename) {
         VIDEO_MAP[videoId].requestedBy.insert(endpointId);
         ENDPOINT_MAP[endpointId].videoRequests[videoId] = numRequest;
     }
+
 
     inputFile.close();
 }
