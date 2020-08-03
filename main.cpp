@@ -233,7 +233,7 @@ void outputFile(std::string& fileName, std::map<int, std::vector<int>> result) {
     int cacheId = entry.getKey();
     std::vector vec = entry.getValue();
     ofstream << cacheId << " ";
-    std::copy (result.begin(), result.end(), std::ostream_iterator<int>(ofstream, " ");
+    std::copy (vec.begin(), vec.end(), std::ostream_iterator<int>(ofstream, " ");
     ofstream << std::endl;
   }
 }
