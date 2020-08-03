@@ -1,5 +1,6 @@
 #include <iostream>
 #include <vector>
+#include <unordered_map>
 
 using namespace std;
 
@@ -15,14 +16,9 @@ struct Server {
   vector<int> videos; // video ids on this server
 };
 
-struct Connection {
-  int serverId;
-  int latency;
-};
-
 struct Endpoint {
   int id;
-  vector<Connection> connectedTo;
+  unordered_map<int, int> connections; // server id -> latency
   vector<int> requests; // video ids this endpoint requests
 };
 
