@@ -4,9 +4,12 @@
 #include <vector>
 #include <string>
 #include <unordered_map>
+#include <unordered_set>
 
 
 using namespace std;
+
+static constexpr int DATA_CENTER = 1;
 
 struct Video {
   int id;
@@ -18,15 +21,18 @@ struct Server {
   int id; // -1 for data center
   int size; // -1 for data center
   vector<int> videos; // video ids on this server
+  unordered_set<int> videosSet;
 };
 
 struct Endpoint {
   int id;
   unordered_map<int, int> connections; // server id -> latency
-  vector<int> requests; // video ids this endpoint requests
+  map<int, int> videoRequests; // video id -> # of requests
 };
 
 void parseInput(std::string filename);
+
+unordered_map<int, Server> serverMp;
 
 std::vector<Video> VIDEO_VECTOR;
 std::vector<Server> SERVER_VECTOR;
@@ -78,4 +84,27 @@ void emit(const vector<Server>& servers) {
     cout << "\n";
   }
   cout << flush;
+}
+
+int calc_score(const vector<Endpoint>& endpoints) {
+  int score{0};
+
+  int vidId, vidNumReq, bestScore, scoreCand;
+  for (const auto& endpoint : endpoints) {
+    for (const auto& vidReq : endpoint.videoRequests) {
+      vidId = vidReq.first;
+      vidNumReq = vidReq.second;
+      bestScore = 0;
+      for (const auto& conn : endpoint.connections) {
+        const auto& server = serverMp[conn.first];
+        if (server.videosSet.find(vidReq.first) != server.videosSet.end()) {
+          scoreCand = (endpoint.connections.find(DATA_CENTER)->second - conn.second) * vidNumReq;
+          bestScore = max(scoreCand, bestScore);
+        }
+      }
+      score += bestScore;
+    }
+  }
+
+  return score;
 }
