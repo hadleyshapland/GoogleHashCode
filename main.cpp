@@ -131,3 +131,26 @@ int calc_score(const vector<Endpoint>& endpoints) {
 
   return score;
 }
+
+int getBestCacheFromVideoRequest(const vector<int>& allEndPointIDs, int videoId) {
+  int minScore = -1;
+  int minLatencyCache = -1;
+  int dataCenterLatency = allEndPointIDs[-1].second;
+  
+  for (const auto& endPointID : allEndPointIDs) {
+    Endpoint endpoint = ENDPOINT_MAP[endPointID];
+		int numVidRequests = endpoint.videoRequests[videoId];
+		
+    for (const auto& connection : endpoint.connections) { // connection = <server id, latency>
+      int latency = connection.second;
+      int candScore = numVidRequests * (dataCenterLatency - latency);
+      if (minScore == -1 || candScore < minScore) {
+          minScore = candScore;
+          minLatencyCache = connection.first;
+      }
+    }
+  }
+    
+  return minLatencyCache;
+
+}
