@@ -1,6 +1,10 @@
 #include <iostream>
+#include <map>
+#include <fstream>
 #include <vector>
+#include <string>
 #include <unordered_map>
+
 
 using namespace std;
 
@@ -22,9 +26,43 @@ struct Endpoint {
   vector<int> requests; // video ids this endpoint requests
 };
 
+void parseInput(std::string filename);
+
+std::vector<Video> VIDEO_VECTOR;
+std::vector<Server> SERVER_VECTOR;
+
+
 int main() {
-    std::cout << "Hello, World!" << std::endl;
-    return 0;
+    std::string filename;
+    std::ifstream inputFile;
+
+    std::cout<<"which file do you want to open? ";
+    std::cin>>filename;
+
+    parseInput(filename);
+}
+
+
+void parseInput(std::string filename) {
+    std::ifstream inputFile(filename);
+
+    //read first line
+    int numVideos, numEndpoints, numRequests, numCache, cacheCapacity;
+    inputFile >> numVideos >> numEndpoints >> numRequests >> numCache >> cacheCapacity;
+
+    std::vector<Video> videoVector;
+
+    //add video sizes
+    for(uint32_t i = 0; i < numVideos; ++i) {
+        Video newVideo;
+        newVideo.id = i;
+        inputFile >> newVideo.size;
+        VIDEO_VECTOR.push_back(newVideo);
+    }
+
+
+
+    inputFile.close();
 }
 
 // Emit optimized server capacities in form
