@@ -33,7 +33,6 @@ struct Endpoint {
 
 void parseInput(std::string filename);
 
-
 std::map<int, Video> VIDEO_MAP;
 std::map<int, Server> SERVER_MAP;
 std::map<int, Endpoint> ENDPOINT_MAP;
@@ -84,7 +83,13 @@ void parseInput(std::string filename) {
         ENDPOINT_MAP[i] = currentEndpoint;
     }
 
-
+    //iterate through video requests
+    for(uint32_t i = 0; i < numRequests; ++i) {
+        int videoId;
+        int endpointId;
+        int numRequest;
+        inputFile >> videoId >> endpointId >> numRequest;
+    }
 
 
 
@@ -116,7 +121,7 @@ int calc_score(const vector<Endpoint>& endpoints) {
       vidNumReq = vidReq.second;
       bestScore = 0;
       for (const auto& conn : endpoint.connections) {
-        const auto& server = serverMp[conn.first];
+        const auto& server = SERVER_MAP[conn.first];
         if (server.videosSet.find(vidReq.first) != server.videosSet.end()) {
           scoreCand = (endpoint.connections.find(DATA_CENTER)->second - conn.second) * vidNumReq;
           bestScore = max(scoreCand, bestScore);
