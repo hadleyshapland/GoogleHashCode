@@ -32,10 +32,10 @@ struct Endpoint {
 
 void parseInput(std::string filename);
 
-
 std::map<int, Video> VIDEO_MAP;
 std::map<int, Server> SERVER_MAP;
 std::map<int, Endpoint> ENDPOINT_MAP;
+
 
 int main() {
     std::string filename;
@@ -80,6 +80,11 @@ void parseInput(std::string filename) {
             int latency;
             inputFile >> cacheNum >> latency;
             currentEndpoint.connections[cacheNum] = latency;
+
+            Server newServer;
+            newServer.size = cacheCapacity;
+            newServer.id = cache;
+            SERVER_MAP[cache] = newServer;
         }
 
         ENDPOINT_MAP[i] = currentEndpoint;
@@ -90,6 +95,18 @@ void parseInput(std::string filename) {
         VIDEO_MAP[videoPair.first].requestedBy.insert(endpoint.first);
       }
     }
+
+    //iterate through video requests
+    for(uint32_t i = 0; i < numRequests; ++i) {
+        int videoId;
+        int endpointId;
+        int numRequest;
+        inputFile >> videoId >> endpointId >> numRequest;
+
+        VIDEO_MAP[videoId].requestedBy.insert(endpointId);
+        ENDPOINT_MAP[endpointId].videoRequests[videoId] = numRequest;
+    }
+
 
     inputFile.close();
 }
@@ -140,7 +157,6 @@ int getBestCacheFromVideoRequest(int videoId) {
     Endpoint endpoint = ENDPOINT_MAP[endPointID];
     int numVidRequests = endpoint.videoRequests[videoId];
     int dataCenterLatency = endpoint.connections[DATA_CENTER];
-
     for (const auto& connection : endpoint.connections) { // connection = <server id, latency>
       int latency = connection.second;
       int candScore = numVidRequests * (dataCenterLatency - latency);
