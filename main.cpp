@@ -36,6 +36,7 @@ std::map<int, Video> VIDEO_MAP;
 std::map<int, Server> SERVER_MAP;
 std::map<int, Endpoint> ENDPOINT_MAP;
 
+
 int main() {
     std::string filename;
     std::ifstream inputFile;
@@ -96,6 +97,9 @@ void parseInput(std::string filename) {
         int endpointId;
         int numRequest;
         inputFile >> videoId >> endpointId >> numRequest;
+
+        VIDEO_MAP[videoId].requestedBy.insert(endpointId);
+        ENDPOINT_MAP[endpointId].videoRequests[videoId] = numRequest;
     }
 
     inputFile.close();
