@@ -29,7 +29,11 @@ struct Endpoint {
   vector<int> requests; // video ids this endpoint requests
 };
 
-std::vector<Video> parseInput(std::string filename);
+void parseInput(std::string filename);
+
+std::vector<Video> VIDEO_VECTOR;
+std::vector<Server> SERVER_VECTOR;
+
 
 int main() {
     std::string filename;
@@ -38,10 +42,10 @@ int main() {
     std::cout<<"which file do you want to open? ";
     std::cin>>filename;
 
-    std::vector<Video> videos = parseInput(filename);
+    parseInput(filename);
 }
 
-std::vector<Video> parseInput(std::string filename) {
+void parseInput(std::string filename) {
     std::ifstream inputFile(filename);
 
     //read first line
@@ -51,11 +55,16 @@ std::vector<Video> parseInput(std::string filename) {
     std::vector<Video> videoVector;
 
     //add video sizes
+    for(uint32_t i = 0; i < numVideos; ++i) {
+        Video newVideo;
+        newVideo.id = i;
+        inputFile >> newVideo.size;
+        VIDEO_VECTOR.push_back(newVideo);
+    }
+
 
 
     inputFile.close();
-    return videoVector;
-
 }
 
 
