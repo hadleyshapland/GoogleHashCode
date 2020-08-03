@@ -14,7 +14,7 @@ static constexpr int DATA_CENTER = 1;
 struct Video {
   int id;
   int size;
-  vector<int> requestedBy; // endpoint IDs requesting the video
+  unordered_set<int> requestedBy; // endpoint IDs requesting the video
 };
 
 struct Server {
@@ -26,7 +26,6 @@ struct Server {
 
 struct Endpoint {
   int id;
-  int datacenterLatency;
   unordered_map<int, int> connections; // server id -> latency
   map<int, int> videoRequests; // video id -> # of requests
 };
@@ -69,7 +68,9 @@ void parseInput(std::string filename) {
     for(uint32_t i = 0; i < numEndpoints; ++i) {
         Endpoint currentEndpoint;
         currentEndpoint.id = i;
-        inputFile >> currentEndpoint.datacenterLatency;
+        int datacenterLatency;
+        inputFile >> datacenterLatency;
+        currentEndpoint.connections[DATA_CENTER] = datacenterLatency;
         int numCache;
         inputFile >> numCache;
 
@@ -83,6 +84,12 @@ void parseInput(std::string filename) {
         ENDPOINT_MAP[i] = currentEndpoint;
     }
 
+    for (const auto& endpoint : ENDPOINT_MAP) {
+      for (const auto& videoPair : endpoint.second.videoRequests) {
+        VIDEO_MAP[videoPair.first].requestedBy.insert(endpoint.first);
+      }
+    }
+
     //iterate through video requests
     for(uint32_t i = 0; i < numRequests; ++i) {
         int videoId;
@@ -90,8 +97,6 @@ void parseInput(std::string filename) {
         int numRequest;
         inputFile >> videoId >> endpointId >> numRequest;
     }
-
-
 
     inputFile.close();
 }
@@ -132,4 +137,27 @@ int calc_score(const vector<Endpoint>& endpoints) {
   }
 
   return score;
+}
+
+int getBestCacheFromVideoRequest(const vector<int>& allEndPointIDs, int videoId) {
+  int minScore = -1;
+  int minLatencyCache = -1;
+  int dataCenterLatency = allEndPointIDs[-1].second;
+  
+  for (const auto& endPointID : allEndPointIDs) {
+    Endpoint endpoint = ENDPOINT_MAP[endPointID];
+		int numVidRequests = endpoint.videoRequests[videoId];
+		
+    for (const auto& connection : endpoint.connections) { // connection = <server id, latency>
+      int latency = connection.second;
+      int candScore = numVidRequests * (dataCenterLatency - latency);
+      if (minScore == -1 || candScore < minScore) {
+          minScore = candScore;
+          minLatencyCache = connection.first;
+      }
+    }
+  }
+    
+  return minLatencyCache;
+
 }
