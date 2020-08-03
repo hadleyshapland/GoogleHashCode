@@ -18,6 +18,12 @@ struct Video {
   int id;
   int size;
   unordered_set<int> requestedBy; // endpoint IDs requesting the video
+  void print() const {
+    cerr << id << " " << size << " req by ";
+    for (const auto& req : requestedBy) {
+      cerr << req << " ";
+    }
+  }
 };
 
 struct Server {
@@ -25,12 +31,28 @@ struct Server {
   int size; // -1 for data center
   vector<int> videos; // video ids on this server
   unordered_set<int> videosSet;
+  void print() const {
+    cerr << id << " " << size << " has videos ";
+    for (const auto& video : videos) {
+      cerr << video << " ";
+    }
+  }
 };
 
 struct Endpoint {
   int id;
   unordered_map<int, int> connections; // server id -> latency
   map<int, int> videoRequests; // video id -> # of requests
+  void print() const {
+    cerr << id << " " << " has conn ";
+    for (const auto& conn : connections) {
+      cerr << conn.first << " ";
+    }
+    cerr << " has videos ";
+    for (const auto& vid : videoRequests) {
+      cerr << vid.first << " ";
+    }
+  }
 };
 
 void parseInput(std::string filename);
@@ -47,6 +69,10 @@ void parseInput(std::string filename) {
     int numVideos, numEndpoints, numRequests, numCache, cacheCapacity;
     inputFile >> numVideos >> numEndpoints >> numRequests >> numCache >> cacheCapacity;
 
+    VIDEOS.reserve(numVideos);
+    ENDPOINTS.reserve(numEndpoints);
+    SERVERS = vector<Server>(numCache, Server{});
+
     std::vector<Video> videoVector;
 
     //read second line (video sizes)
@@ -54,7 +80,7 @@ void parseInput(std::string filename) {
         Video newVideo;
         newVideo.id = i;
         inputFile >> newVideo.size;
-        VIDEOS[i] = newVideo;
+        VIDEOS.push_back(newVideo);
     }
 
     //read next set of lines (num endpoints)
@@ -79,15 +105,8 @@ void parseInput(std::string filename) {
             SERVERS[cache] = newServer;
         }
 
-        ENDPOINTS[i] = currentEndpoint;
+        ENDPOINTS.push_back(currentEndpoint);
     }
-
-//    TODO idk what this does lol
-//    for (const auto& endpoint : ENDPOINTS) {
-//      for (const auto& videoPair : endpoint.videoRequests) {
-//        VIDEOS[videoPair].requestedBy.insert(endpoint);
-//      }
-//    }
 
     //iterate through video requests
     for(uint32_t i = 0; i < numRequests; ++i) {
@@ -102,7 +121,18 @@ void parseInput(std::string filename) {
 
     //TESTING PARSE
 
-
+    cerr << "VIDEOS" << endl;
+    for (const auto& video : VIDEOS) {
+      cerr << "\t"; video.print(); cerr << endl;;
+    }
+    cerr << "ENDPOINTS" << endl;
+    for (const auto& ep : ENDPOINTS) {
+      cerr << "\t"; ep.print(); cerr << endl;;
+    }
+    cerr << "SERVERS" << endl;
+    for (const auto& server : SERVERS) {
+      cerr << "\t"; server.print(); cerr << endl;;
+    }
 
     inputFile.close();
 }
@@ -211,15 +241,10 @@ void outputFile(std::string& fileName, std::map<int, std::vector<int>> result) {
 }
 
 
-int main() {
-    std::string filename, outputName;
-    std::ifstream inputFile;
+int main(int argc, char** argv) {
+    std::string filename(argv[1]), outputName(argv[2]);
 
-    std::cout<<"which file do you want to open? ";
-    std::cin>>filename;
-
-    std::cout<<"which file do you want to write to? ";
-    std::cin>>outputName;
+    cerr << "reading " << filename << ", writing " << outputName << endl;
 
     parseInput(filename);
 
