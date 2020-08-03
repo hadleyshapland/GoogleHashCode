@@ -1,5 +1,6 @@
 #include <iostream>
 #include <map>
+#include <algorithm>
 #include <fstream>
 #include <vector>
 #include <string>
@@ -8,8 +9,9 @@
 
 
 using namespace std;
+using VideoId = int;
 
-static constexpr int DATA_CENTER = 1;
+static constexpr int DATA_CENTER = -1;
 
 struct Video {
   int id;
@@ -147,6 +149,39 @@ int calc_score(const vector<Endpoint>& endpoints) {
   }
 
   return score;
+}
+
+template<typename T>
+vector<int> keys_of_map(const T& mp) {
+  vector<int> keys(mp.size());
+  for (const auto& p : mp) {
+    keys.push_back(p.first);
+  }
+  return keys;
+}
+
+vector<VideoId> sortBySizeAndRequests() {
+  // size / total # of requests. smaller = better
+  //   e.g. 100 MB, 10 req (ratio 10) is worse than 200 MB, 50 req (ratio 4).
+  //
+  // TODO: Maybe we should be looking at the total # of requests per endpoint,
+  // rather than aggregating all endpoint requests, because later on we try to
+  // attach the video to only one (the best) cache.
+  auto score = [](int videoId) -> double {
+    const auto& video = VIDEO_MAP[videoId];
+    const double size = video.size;
+    double requests = 0;
+    for (int req : video.requestedBy) {
+      auto& ep = ENDPOINT_MAP[req];
+      requests += ep.videoRequests[videoId];
+    }
+
+    return (requests / size);
+  };
+
+  vector<VideoId> videos = keys_of_map(VIDEO_MAP);
+  sort(videos.begin(), videos.end(), score);
+  return videos;
 }
 
 int getBestCacheFromVideoRequest(int videoId) {
