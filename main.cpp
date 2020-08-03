@@ -51,9 +51,15 @@ int main() {
 
     parseInput(filename);
 
-    //algorithm
+    std::map<int, std::vector<int>> result;
 
-    outputFile(outputName)
+    std::vector<VideoId> sortedVideos = sortBySizeAndRequests();
+    for (const auto& videoId : sortedVideos) {
+      int cacheId = getBestCacheFromVideoRequest(VIDEO_MAP[videoId].requestedBy, videoId);
+      result[cacheid].push_back(videoId);
+    }
+
+    outputFile(outputName, result)
     
 }
 
@@ -213,12 +219,16 @@ int getBestCacheFromVideoRequest(int videoId) {
   return minLatencyCache;
 }
 
-void outputFile(std::string& fileName) {
-   std::ofstream outputFile(fileName);
+void outputFile(std::string& fileName, std::map<int, std::vector<int>> result) {
+  std::ofstream outputFile(fileName);
 
-   ofstream << RESULT.size() << std::endl;
+  ofstream << result.size() << std::endl;
 
-   for (int i = 0; i < RESULT.size() - 1; ++i) {
-     
-   }
+  for (Map.Entry<int, std::vector<int>> entry : result.entrySet()) {
+    int cacheId = entry.getKey();
+    std::vector vec = entry.getValue();
+    ofstream << cacheId << " ";
+    std::copy (result.begin(), result.end(), std::ostream_iterator<int>(ofstream, " ");
+    ofstream << std::endl;
+  }
 }
