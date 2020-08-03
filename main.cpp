@@ -42,7 +42,7 @@ struct Server {
 struct Endpoint {
   int id;
   unordered_map<int, int> connections; // server id -> latency
-  map<int, int> videoRequests; // video id -> # of requests
+  unordered_map<int, int> videoRequests; // video id -> # of requests
   void print() const {
     cerr << id << " " << " has conn ";
     for (const auto& conn : connections) {
@@ -152,8 +152,8 @@ void emit(const vector<Server>& servers) {
   cout << flush;
 }
 
-int calc_score(const vector<Endpoint>& endpoints) {
-  int score{0};
+double calc_score(const vector<Endpoint>& endpoints) {
+  double score{0};
 
   int vidId, vidNumReq, bestScore, scoreCand;
   for (const auto& endpoint : endpoints) {
@@ -162,6 +162,7 @@ int calc_score(const vector<Endpoint>& endpoints) {
       vidNumReq = vidReq.second;
       bestScore = 0;
       for (const auto& conn : endpoint.connections) {
+        if (conn.first == -1) continue;
         const auto& server = SERVERS[conn.first];
         if (server.videosSet.find(vidReq.first) != server.videosSet.end()) {
           scoreCand = (endpoint.connections.find(DATA_CENTER)->second - conn.second) * vidNumReq;
@@ -172,7 +173,15 @@ int calc_score(const vector<Endpoint>& endpoints) {
     }
   }
 
-  return score;
+  double allRequests = 0;
+  for (const auto& vid : VIDEOS){
+    for (const auto& req : vid.requestedBy) {
+      allRequests += ENDPOINTS[req].videoRequests[vid.id];
+    }
+  }
+
+
+  return score / allRequests;
 }
 
 vector<VideoId> sortBySizeAndRequests() {
@@ -268,7 +277,7 @@ int main(int argc, char** argv) {
       SERVERS[p.first].videosSet = unordered_set<int>(p.second.begin(), p.second.end());
     }
 
-    // cerr << "Score: " << calc_score(ENDPOINTS);
+    cerr << "Score: " << calc_score(ENDPOINTS) << endl;
 
     outputFile(outputName, result);
 }
