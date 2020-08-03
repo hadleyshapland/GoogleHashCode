@@ -26,3 +26,18 @@ int main() {
     std::cout << "Hello, World!" << std::endl;
     return 0;
 }
+
+// Emit optimized server capacities in form
+//   <num_servers>\n
+//   (<server_id> (<video_id>)*\n)*
+void emit(const vector<Server>& servers) {
+  cout << servers.size() << "\n";
+  for (const auto& server : servers) {
+    cout << server.id;
+    for (const auto& video : server.videos) {
+      cout << " " << video;
+    }
+    cout << "\n";
+  }
+  cout << flush;
+}
