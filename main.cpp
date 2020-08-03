@@ -150,7 +150,7 @@ int getBestCacheFromVideoRequest(const vector<int>& allEndPointIDs, int videoId)
   
   for (const auto& endPointID : allEndPointIDs) {
     Endpoint endpoint = ENDPOINT_MAP[endPointID];
-		int numVidRequests = endpoint.videoRequests[videoId];
+    int numVidRequests = endpoint.videoRequests[videoId];
 		
     for (const auto& connection : endpoint.connections) { // connection = <server id, latency>
       int latency = connection.second;
