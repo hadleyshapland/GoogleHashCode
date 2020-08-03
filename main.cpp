@@ -14,7 +14,7 @@ static constexpr int DATA_CENTER = 1;
 struct Video {
   int id;
   int size;
-  vector<int> requestedBy; // endpoint IDs requesting the video
+  unordered_set<int> requestedBy; // endpoint IDs requesting the video
 };
 
 struct Server {
@@ -26,7 +26,6 @@ struct Server {
 
 struct Endpoint {
   int id;
-  int datacenterLatency;
   unordered_map<int, int> connections; // server id -> latency
   map<int, int> videoRequests; // video id -> # of requests
 };
@@ -70,7 +69,9 @@ void parseInput(std::string filename) {
     for(uint32_t i = 0; i < numEndpoints; ++i) {
         Endpoint currentEndpoint;
         currentEndpoint.id = i;
-        inputFile >> currentEndpoint.datacenterLatency;
+        int datacenterLatency;
+        inputFile >> datacenterLatency;
+        currentEndpoint.connections[DATA_CENTER] = datacenterLatency;
         int numCache;
         inputFile >> numCache;
 
@@ -84,9 +85,11 @@ void parseInput(std::string filename) {
         ENDPOINT_MAP[i] = currentEndpoint;
     }
 
-
-
-
+    for (const auto& endpoint : ENDPOINT_MAP) {
+      for (const auto& videoPair : endpoint.second.videoRequests) {
+        VIDEO_MAP[videoPair.first].requestedBy.insert(endpoint.first);
+      }
+    }
 
     inputFile.close();
 }
@@ -116,7 +119,7 @@ int calc_score(const vector<Endpoint>& endpoints) {
       vidNumReq = vidReq.second;
       bestScore = 0;
       for (const auto& conn : endpoint.connections) {
-        const auto& server = serverMp[conn.first];
+        const auto& server = SERVER_MAP[conn.first];
         if (server.videosSet.find(vidReq.first) != server.videosSet.end()) {
           scoreCand = (endpoint.connections.find(DATA_CENTER)->second - conn.second) * vidNumReq;
           bestScore = max(scoreCand, bestScore);
