@@ -1,5 +1,6 @@
 #include <iostream>
 #include <map>
+#include <algorithm>
 #include <fstream>
 #include <vector>
 #include <string>
@@ -8,8 +9,9 @@
 
 
 using namespace std;
+using VideoId = int;
 
-static constexpr int DATA_CENTER = 1;
+static constexpr int DATA_CENTER = -1;
 
 struct Video {
   int id;
@@ -88,6 +90,11 @@ void parseInput(std::string filename) {
             int latency;
             inputFile >> cacheNum >> latency;
             currentEndpoint.connections[cacheNum] = latency;
+
+            Server newServer;
+            newServer.size = cacheCapacity;
+            newServer.id = cache;
+            SERVER_MAP[cache] = newServer;
         }
 
         ENDPOINT_MAP[i] = currentEndpoint;
@@ -109,6 +116,7 @@ void parseInput(std::string filename) {
         VIDEO_MAP[videoId].requestedBy.insert(endpointId);
         ENDPOINT_MAP[endpointId].videoRequests[videoId] = numRequest;
     }
+
 
     inputFile.close();
 }
@@ -151,15 +159,47 @@ int calc_score(const vector<Endpoint>& endpoints) {
   return score;
 }
 
-int getBestCacheFromVideoRequest(const vector<int>& allEndPointIDs, int videoId) {
+template<typename T>
+vector<int> keys_of_map(const T& mp) {
+  vector<int> keys(mp.size());
+  for (const auto& p : mp) {
+    keys.push_back(p.first);
+  }
+  return keys;
+}
+
+vector<VideoId> sortBySizeAndRequests() {
+  // size / total # of requests. smaller = better
+  //   e.g. 100 MB, 10 req (ratio 10) is worse than 200 MB, 50 req (ratio 4).
+  //
+  // TODO: Maybe we should be looking at the total # of requests per endpoint,
+  // rather than aggregating all endpoint requests, because later on we try to
+  // attach the video to only one (the best) cache.
+  auto score = [](int videoId) -> double {
+    const auto& video = VIDEO_MAP[videoId];
+    const double size = video.size;
+    double requests = 0;
+    for (int req : video.requestedBy) {
+      auto& ep = ENDPOINT_MAP[req];
+      requests += ep.videoRequests[videoId];
+    }
+
+    return (requests / size);
+  };
+
+  vector<VideoId> videos = keys_of_map(VIDEO_MAP);
+  sort(videos.begin(), videos.end(), score);
+  return videos;
+}
+
+int getBestCacheFromVideoRequest(int videoId) {
   int minScore = -1;
   int minLatencyCache = -1;
-  int dataCenterLatency = allEndPointIDs[-1].second;
-  
-  for (const auto& endPointID : allEndPointIDs) {
+
+  for (const auto& endPointID : VIDEO_MAP[videoId].requestedBy) {
     Endpoint endpoint = ENDPOINT_MAP[endPointID];
-		int numVidRequests = endpoint.videoRequests[videoId];
-		
+    int numVidRequests = endpoint.videoRequests[videoId];
+    int dataCenterLatency = endpoint.connections[DATA_CENTER];
     for (const auto& connection : endpoint.connections) { // connection = <server id, latency>
       int latency = connection.second;
       int candScore = numVidRequests * (dataCenterLatency - latency);
@@ -169,9 +209,8 @@ int getBestCacheFromVideoRequest(const vector<int>& allEndPointIDs, int videoId)
       }
     }
   }
-    
-  return minLatencyCache;
 
+  return minLatencyCache;
 }
 
 void outputFile(std::string& fileName) {
