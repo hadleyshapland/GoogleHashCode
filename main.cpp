@@ -216,7 +216,7 @@ int getBestCacheFromVideoRequest(int videoId) {
     for (const auto& connection : endpoint.connections) { // connection = <server id, latency>
       int latency = connection.second;
       int candScore = numVidRequests * (dataCenterLatency - latency);
-      if (minScore == -1 || candScore < minScore) {
+      if (SERVERS[connection.first].size >= VIDEOS[videoId].size && (minScore == -1 || candScore > minScore)) {
           minScore = candScore;
           minLatencyCache = connection.first;
       }
@@ -226,7 +226,7 @@ int getBestCacheFromVideoRequest(int videoId) {
   return minLatencyCache;
 }
 
-void outputFile(std::string& fileName, std::map<int, std::vector<int>> result) {
+void outputFile(std::string& fileName, unordered_map<int, std::vector<int>> result) {
   std::ofstream outputFile(fileName);
 
   outputFile << result.size() << std::endl;
@@ -248,13 +248,27 @@ int main(int argc, char** argv) {
 
     parseInput(filename);
 
-    std::map<int, std::vector<int>> result;
+    unordered_map<int, std::vector<int>> result;
 
     std::vector<VideoId> sortedVideos = sortBySizeAndRequests();
+    cerr << "sorted videos: ";
+    for (auto i : sortedVideos) cerr << i << " ";
+    cerr << endl;
     for (const auto& videoId : sortedVideos) {
       int cacheId = getBestCacheFromVideoRequest(videoId);
+      if (cacheId == -1) continue;
+      cerr << cacheId << endl;
       result[cacheId].push_back(videoId);
+      SERVERS[cacheId].size -= VIDEOS[videoId].size;
     }
+
+    // Update endpoints and print score
+    for (const auto& p : result) {
+      SERVERS[p.first].videos = p.second;
+      SERVERS[p.first].videosSet = unordered_set<int>(p.second.begin(), p.second.end());
+    }
+
+    // cerr << "Score: " << calc_score(ENDPOINTS);
 
     outputFile(outputName, result);
 }
