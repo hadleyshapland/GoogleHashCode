@@ -38,13 +38,21 @@ std::map<int, Endpoint> ENDPOINT_MAP;
 
 
 int main() {
-    std::string filename;
+    std::string filename, outputName;
     std::ifstream inputFile;
 
     std::cout<<"which file do you want to open? ";
     std::cin>>filename;
 
+    std::cout<<"which file do you want to write to? ";
+    std::cin>>outputName;
+
     parseInput(filename);
+
+    //algorithm
+
+    outputFile(outputName)
+    
 }
 
 
@@ -164,4 +172,14 @@ int getBestCacheFromVideoRequest(const vector<int>& allEndPointIDs, int videoId)
     
   return minLatencyCache;
 
+}
+
+void outputFile(std::string& fileName) {
+   std::ofstream outputFile(fileName);
+
+   ofstream << RESULT.size() << std::endl;
+
+   for (int i = 0; i < RESULT.size() - 1; ++i) {
+     
+   }
 }
