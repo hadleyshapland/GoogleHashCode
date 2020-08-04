@@ -182,7 +182,7 @@ double calc_score(const vector<Endpoint>& endpoints) {
   }
   cout << "allRequests: " << allRequests << endl;
 
-  return score / allRequests;
+  return score / allRequests * 1000;
 }
 
 vector<VideoId> sortBySizeAndRequests() {
@@ -278,7 +278,9 @@ int main(int argc, char** argv) {
       SERVERS[p.first].videosSet = unordered_set<int>(p.second.begin(), p.second.end());
     }
 
-    cerr << "Score: " << calc_score(ENDPOINTS) << endl;
+    const int score = calc_score(ENDPOINTS);
+    cerr << flush;
+    cerr << "Score: " << score << endl;
 
     outputFile(outputName, result);
 }
