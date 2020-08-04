@@ -166,6 +166,7 @@ double calc_score(const vector<Endpoint>& endpoints) {
         const auto& server = SERVERS[conn.first];
         if (server.videosSet.find(vidReq.first) != server.videosSet.end()) {
           scoreCand = (endpoint.connections.find(DATA_CENTER)->second - conn.second) * vidNumReq;
+          cout << vidId << ": " << (endpoint.connections.find(DATA_CENTER)->second - conn.second) << " " << vidNumReq << endl;
           bestScore = max(scoreCand, bestScore);
         }
       }
@@ -179,7 +180,7 @@ double calc_score(const vector<Endpoint>& endpoints) {
       allRequests += ENDPOINTS[req].videoRequests[vid.id];
     }
   }
-
+  cout << "allRequests: " << allRequests << endl;
 
   return score / allRequests;
 }
