@@ -259,57 +259,65 @@ void outputFile(std::string& fileName, unordered_map<int, std::vector<int>> resu
 
 void binpack(Server& server) {
   const auto& endpoints = server.connections;
-  unordered_map<int, int> videoToImprovement;
+  unordered_map<uint64_t, uint64_t> videoToImprovement;
   for (const auto& epPair : endpoints) {
 
     const auto& ep = ENDPOINTS[epPair.first];
-    const int cacheLatency = epPair.second;
+    const uint64_t cacheLatency = epPair.second;
     for (const auto& vid : ep.videoRequests) {
-      int vidId = vid.first, vidReq = vid.second;
+      uint64_t vidId = vid.first, vidReq = vid.second;
       videoToImprovement[vidId] += ((ep.connections.find(DATA_CENTER)->second - cacheLatency) * vidReq);
     }
   }
 
   // video id -> improvement (value)
-  vector<pair<int, int>> vids(videoToImprovement.size());
+  vector<pair<uint64_t, uint64_t>> vids(videoToImprovement.size());
   for (const auto& p : videoToImprovement) vids.push_back(make_pair(p.first, p.second));
 
-  int n = vids.size(), W = server.size;
-  vector<vector<double>> K(n + 1, vector<double>(W + 1, 0));
-  for (int i = 0; i <= n; ++i) {
-    for (int w = 0; w <= W; ++w) {
-      const auto& v = vids[i - 1];
-      int vidSize = VIDEOS[v.first].size;
-      int vidValue = v.second;
-      if (i == 0 || W == 0) {
+  uint64_t n = vids.size(), W = server.size;
+  cout << n << " " << W << endl;
+  vector<vector<uint64_t>> K(n + 1, vector<uint64_t>(W + 1, 0));
+  cout << "here" << K.size() << " " << K[0].size() << endl;
+  for (uint64_t i = 0; i <= n; ++i) {
+    for (uint64_t w = 0; w <= W; ++w) {
+      if (i == 0 || w == 0) {
         K[i][w] = 0;
-      } else if (vidSize <= w) {
-        K[i][w] = max(vidValue + K[i - 1][w - vidSize], K[i - 1][w]);
       } else {
-        K[i][w] = K[i - 1][w];
+        const auto& v = vids[i - 1];
+        uint64_t vidSize = VIDEOS[v.first].size;
+        uint64_t vidValue = v.second;
+        if (vidSize <= w) {
+          K[i][w] = max(vidValue + K[i - 1][w - vidSize], K[i - 1][w]);
+        } else {
+          K[i][w] = K[i - 1][w];
+        }
       }
     }
   }
 
-  int w = W;
-  int res = K[n][W];
-  vector<int> videosOnCache(vids.size());
-  for (int i = n; i > 0 && res > 0; --i) {
+  uint64_t w = W;
+  uint64_t res = K[n][W];
+  cout << "result: " << res << endl;
+  unordered_set<int> videosOnCache(vids.size());
+  for (uint64_t i = n; i > 0 && res > 0; --i) {
     if (res == K[i - 1][w]) {
       continue;
     } else {
       // video should be included
       const auto& v = vids[i - 1];
-      int vidSize = VIDEOS[v.first].size;
-      int vidValue = v.second;
-      videosOnCache.push_back(v.first);
+      uint64_t vidSize = VIDEOS[v.first].size;
+      uint64_t vidValue = v.second;
+      videosOnCache.insert(v.first);
       res -= vidValue;
       w -= vidSize;
     }
   }
+  cout << "using ";
+  for (const auto& n : videosOnCache) cout << n << " ";
+  cout << endl;
 
-  server.videos = videosOnCache;
-  server.videosSet = unordered_set<int>(videosOnCache.begin(), videosOnCache.end());
+  server.videosSet = videosOnCache;
+  server.videos = vector<int>(videosOnCache.begin(), videosOnCache.end());
 }
 
 int main(int argc, char** argv) {
